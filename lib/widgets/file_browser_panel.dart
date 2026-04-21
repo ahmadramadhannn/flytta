@@ -53,7 +53,7 @@ class FileBrowserPanel extends StatelessWidget {
                                   padding: const EdgeInsets.all(8),
                                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 4,
-                                    childAspectRatio: 1,
+                                    childAspectRatio: 0.8,
                                     crossAxisSpacing: 8,
                                     mainAxisSpacing: 8,
                                   ),
