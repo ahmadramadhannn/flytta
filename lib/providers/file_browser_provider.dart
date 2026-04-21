@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/file_item.dart';
@@ -9,7 +10,8 @@ class FileBrowserProvider with ChangeNotifier {
 
   // Left panel state
   String _leftPath = FileSystemService.homeDirectory;
-  List<FileItem> _leftFiles = [];
+  List<FileItem> _leftAllFiles = []; // Cached base list from disk
+  List<FileItem> _leftFiles = []; // Filtered/searched result
   FileType? _leftFilterType;
   bool _leftShowHidden = false;
   String _leftSearchQuery = '';
@@ -17,7 +19,8 @@ class FileBrowserProvider with ChangeNotifier {
 
   // Right panel state
   String _rightPath = FileSystemService.homeDirectory;
-  List<FileItem> _rightFiles = [];
+  List<FileItem> _rightAllFiles = []; // Cached base list from disk
+  List<FileItem> _rightFiles = []; // Filtered/searched result
   FileType? _rightFilterType;
   bool _rightShowHidden = false;
   String _rightSearchQuery = '';
@@ -25,6 +28,10 @@ class FileBrowserProvider with ChangeNotifier {
 
   // Staged items (temporary bucket)
   final List<StagedItem> _stagedItems = [];
+
+  // Search debounce timers
+  Timer? _leftSearchDebounce;
+  Timer? _rightSearchDebounce;
 
   // Getters
   String get leftPath => _leftPath;
@@ -41,21 +48,30 @@ class FileBrowserProvider with ChangeNotifier {
   String get rightSearchQuery => _rightSearchQuery;
   bool get rightGridView => _rightGridView;
 
-  List<StagedItem> get stagedItems => List.unmodifiable(_stagedItems);
+  List<StagedItem> get stagedItems => _stagedItems;
   int get stagedItemCount => _stagedItems.length;
 
   FileBrowserProvider() {
     _loadDirectories();
   }
 
+  @override
+  void dispose() {
+    _leftSearchDebounce?.cancel();
+    _rightSearchDebounce?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadDirectories() async {
-    await loadLeftDirectory(_leftPath);
-    await loadRightDirectory(_rightPath);
+    await Future.wait([
+      loadLeftDirectory(_leftPath),
+      loadRightDirectory(_rightPath),
+    ]);
   }
 
   Future<void> loadLeftDirectory(String path) async {
     _leftPath = path;
-    _leftFiles = await fileSystemService.getDirectoryContents(
+    _leftAllFiles = await fileSystemService.getDirectoryContents(
       path,
       showHidden: _leftShowHidden,
       filterType: _leftFilterType,
@@ -66,7 +82,7 @@ class FileBrowserProvider with ChangeNotifier {
 
   Future<void> loadRightDirectory(String path) async {
     _rightPath = path;
-    _rightFiles = await fileSystemService.getDirectoryContents(
+    _rightAllFiles = await fileSystemService.getDirectoryContents(
       path,
       showHidden: _rightShowHidden,
       filterType: _rightFilterType,
@@ -91,38 +107,40 @@ class FileBrowserProvider with ChangeNotifier {
 
   void setLeftFilterType(FileType? type) {
     _leftFilterType = type;
-    notifyListeners();
     loadLeftDirectory(_leftPath);
   }
 
   void setRightFilterType(FileType? type) {
     _rightFilterType = type;
-    notifyListeners();
     loadRightDirectory(_rightPath);
   }
 
   void toggleLeftHidden() {
     _leftShowHidden = !_leftShowHidden;
-    notifyListeners();
     loadLeftDirectory(_leftPath);
   }
 
   void toggleRightHidden() {
     _rightShowHidden = !_rightShowHidden;
-    notifyListeners();
     loadRightDirectory(_rightPath);
   }
 
   void setLeftSearchQuery(String query) {
     _leftSearchQuery = query;
-    _applyLeftSearch();
-    notifyListeners();
+    _leftSearchDebounce?.cancel();
+    _leftSearchDebounce = Timer(const Duration(milliseconds: 150), () {
+      _applyLeftSearch();
+      notifyListeners();
+    });
   }
 
   void setRightSearchQuery(String query) {
     _rightSearchQuery = query;
-    _applyRightSearch();
-    notifyListeners();
+    _rightSearchDebounce?.cancel();
+    _rightSearchDebounce = Timer(const Duration(milliseconds: 150), () {
+      _applyRightSearch();
+      notifyListeners();
+    });
   }
 
   void toggleLeftView() {
@@ -135,42 +153,26 @@ class FileBrowserProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  /// Filters the cached _leftAllFiles list in-memory (no disk I/O)
   void _applyLeftSearch() {
     if (_leftSearchQuery.isEmpty) {
-      _leftFiles = fileSystemService.getDirectoryContentsSync(
-        _leftPath,
-        showHidden: _leftShowHidden,
-        filterType: _leftFilterType,
-      );
+      _leftFiles = _leftAllFiles;
     } else {
-      final allFiles = fileSystemService.getDirectoryContentsSync(
-        _leftPath,
-        showHidden: _leftShowHidden,
-        filterType: _leftFilterType,
-      );
-      _leftFiles = allFiles
-          .where((file) =>
-              file.name.toLowerCase().contains(_leftSearchQuery.toLowerCase()))
+      final query = _leftSearchQuery.toLowerCase();
+      _leftFiles = _leftAllFiles
+          .where((file) => file.name.toLowerCase().contains(query))
           .toList();
     }
   }
 
+  /// Filters the cached _rightAllFiles list in-memory (no disk I/O)
   void _applyRightSearch() {
     if (_rightSearchQuery.isEmpty) {
-      _rightFiles = fileSystemService.getDirectoryContentsSync(
-        _rightPath,
-        showHidden: _rightShowHidden,
-        filterType: _rightFilterType,
-      );
+      _rightFiles = _rightAllFiles;
     } else {
-      final allFiles = fileSystemService.getDirectoryContentsSync(
-        _rightPath,
-        showHidden: _rightShowHidden,
-        filterType: _rightFilterType,
-      );
-      _rightFiles = allFiles
-          .where((file) =>
-              file.name.toLowerCase().contains(_rightSearchQuery.toLowerCase()))
+      final query = _rightSearchQuery.toLowerCase();
+      _rightFiles = _rightAllFiles
+          .where((file) => file.name.toLowerCase().contains(query))
           .toList();
     }
   }
@@ -215,7 +217,6 @@ class FileBrowserProvider with ChangeNotifier {
     if (allSuccess) {
       _stagedItems.clear();
       await loadRightDirectory(destinationPath);
-      notifyListeners();
     }
     
     return allSuccess;
@@ -227,55 +228,5 @@ class FileBrowserProvider with ChangeNotifier {
 
   Future<bool> moveFile(String sourcePath, String destinationPath) async {
     return await fileSystemService.moveFile(sourcePath, destinationPath);
-  }
-}
-
-// Extension for sync version (for search filtering)
-extension FileSystemServiceSync on FileSystemService {
-  List<FileItem> getDirectoryContentsSync(String directoryPath, {
-    bool showHidden = false,
-    FileType? filterType,
-  }) {
-    try {
-      final directory = Directory(directoryPath);
-      if (!directory.existsSync()) {
-        return [];
-      }
-
-      final entities = directory.listSync();
-      final items = <FileItem>[];
-
-      for (final entity in entities) {
-        try {
-          final fileItem = FileItem.fromFileSystemEntity(entity);
-          
-          if (!showHidden && fileItem.isHidden) {
-            continue;
-          }
-
-          if (filterType != null && fileItem.type != filterType) {
-            continue;
-          }
-
-          items.add(fileItem);
-        } catch (e) {
-          continue;
-        }
-      }
-
-      items.sort((a, b) {
-        if (a.type == FileType.directory && b.type != FileType.directory) {
-          return -1;
-        }
-        if (a.type != FileType.directory && b.type == FileType.directory) {
-          return 1;
-        }
-        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
-      });
-
-      return items;
-    } catch (e) {
-      return [];
-    }
   }
 }

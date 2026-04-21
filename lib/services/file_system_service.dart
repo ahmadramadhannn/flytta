@@ -17,31 +17,26 @@ class FileSystemService {
         return [];
       }
 
-      final entities = directory.listSync();
       final items = <FileItem>[];
 
-      for (final entity in entities) {
+      await for (final entity in directory.list()) {
         try {
           final fileItem = FileItem.fromFileSystemEntity(entity);
-          
-          // Filter hidden files
+
           if (!showHidden && fileItem.isHidden) {
             continue;
           }
 
-          // Filter by type
           if (filterType != null && fileItem.type != filterType) {
             continue;
           }
 
           items.add(fileItem);
         } catch (e) {
-          // Skip files that can't be accessed
           continue;
         }
       }
 
-      // Sort: directories first, then files
       items.sort((a, b) {
         if (a.type == FileType.directory && b.type != FileType.directory) {
           return -1;
@@ -61,7 +56,6 @@ class FileSystemService {
   Future<bool> copyFile(String sourcePath, String destinationPath) async {
     try {
       final sourceFile = File(sourcePath);
-      final destFile = File(destinationPath);
       
       await sourceFile.copy(destinationPath);
       return true;

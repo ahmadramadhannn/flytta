@@ -4,12 +4,15 @@ import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
 import '../models/file_item.dart';
 import '../providers/file_browser_provider.dart';
+import '../services/file_system_service.dart';
+import '../services/image_cache_service.dart';
 
 class FileBrowserPanel extends StatelessWidget {
   final bool isLeft;
   final String title;
+  final FileSystemService fileSystemService = FileSystemService();
 
-  const FileBrowserPanel({
+  FileBrowserPanel({
     super.key,
     required this.isLeft,
     required this.title,
@@ -51,6 +54,8 @@ class FileBrowserPanel extends StatelessWidget {
                           : (isLeft ? provider.leftGridView : provider.rightGridView)
                               ? GridView.builder(
                                   padding: const EdgeInsets.all(8),
+                                  cacheExtent: 300,
+                                  addRepaintBoundaries: true,
                                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 4,
                                     childAspectRatio: 0.85,
@@ -63,6 +68,7 @@ class FileBrowserPanel extends StatelessWidget {
                                   },
                                 )
                               : ListView.builder(
+                                  cacheExtent: 500,
                                   itemCount: files.length,
                                   itemBuilder: (context, index) {
                                     return _buildFileTile(context, provider, files[index]);
@@ -194,14 +200,7 @@ class FileBrowserPanel extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            currentPath,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
-            ),
-            overflow: TextOverflow.ellipsis,
-          ),
+          _buildBreadcrumbNavigation(context, provider, currentPath),
         ],
       ),
     );
@@ -383,9 +382,10 @@ class FileBrowserPanel extends StatelessWidget {
     FileBrowserProvider provider,
     FileItem file,
   ) {
-    return Draggable<String>(
-      data: file.path,
-      feedback: Material(
+    return RepaintBoundary(
+      child: Draggable<String>(
+        data: file.path,
+        feedback: Material(
         elevation: 4,
         child: Container(
           width: 120,
@@ -494,13 +494,14 @@ class FileBrowserPanel extends StatelessWidget {
           );
         },
       ),
+      ),
     );
   }
 
   Widget _buildThumbnail(FileItem file) {
     if (file.type == FileType.image) {
-      return Image.file(
-        File(file.path),
+      return Image(
+        image: ImageCacheService().getImage(file.path),
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) {
           return Container(
@@ -593,6 +594,84 @@ class FileBrowserPanel extends StatelessWidget {
       default:
         return PhosphorIcons.file();
     }
+  }
+
+  Widget _buildBreadcrumbNavigation(
+    BuildContext context,
+    FileBrowserProvider provider,
+    String currentPath,
+  ) {
+    final segments = fileSystemService.getPathSegments(currentPath);
+    
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildBreadcrumbChip(
+            context,
+            provider,
+            '/',
+            'Root',
+            isLeft,
+          ),
+          ...segments.asMap().entries.map((entry) {
+            final index = entry.key;
+            final segment = entry.value;
+            final pathUpToHere = Platform.pathSeparator + segments.sublist(0, index + 1).join(Platform.pathSeparator);
+            
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  PhosphorIcons.caretRight(),
+                  size: 12,
+                  color: Colors.grey[600],
+                ),
+                _buildBreadcrumbChip(
+                  context,
+                  provider,
+                  pathUpToHere,
+                  segment,
+                  isLeft,
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBreadcrumbChip(
+    BuildContext context,
+    FileBrowserProvider provider,
+    String path,
+    String label,
+    bool isLeftPanel,
+  ) {
+    return InkWell(
+      onTap: () {
+        if (isLeftPanel) {
+          provider.loadLeftDirectory(path);
+        } else {
+          provider.loadRightDirectory(path);
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: Colors.black87,
+          ),
+        ),
+      ),
+    );
   }
 
   String _formatDate(DateTime date) {

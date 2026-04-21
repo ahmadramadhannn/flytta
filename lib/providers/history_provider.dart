@@ -7,7 +7,7 @@ class HistoryProvider with ChangeNotifier {
   List<HistoryItem> _history = [];
   bool _isLoading = false;
 
-  List<HistoryItem> get history => List.unmodifiable(_history);
+  List<HistoryItem> get history => _history;
   bool get isLoading => _isLoading;
 
   HistoryProvider() {

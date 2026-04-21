@@ -60,7 +60,7 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-      body: const Column(
+      body: Column(
         children: [
           Expanded(
             child: Row(
