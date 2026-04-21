@@ -53,7 +53,7 @@ class FileBrowserPanel extends StatelessWidget {
                                   padding: const EdgeInsets.all(8),
                                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                     crossAxisCount: 4,
-                                    childAspectRatio: 0.8,
+                                    childAspectRatio: 0.85,
                                     crossAxisSpacing: 8,
                                     mainAxisSpacing: 8,
                                   ),
@@ -420,31 +420,28 @@ class FileBrowserPanel extends StatelessWidget {
             cursor: SystemMouseCursors.click,
             child: Card(
               clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: InkWell(
-                      onTap: () {
-                        if (file.type == FileType.directory) {
-                          if (isLeft) {
-                            provider.loadLeftDirectory(file.path);
-                          } else {
-                            provider.loadRightDirectory(file.path);
-                          }
-                        }
-                      },
+              child: InkWell(
+                onTap: () {
+                  if (file.type == FileType.directory) {
+                    if (isLeft) {
+                      provider.loadLeftDirectory(file.path);
+                    } else {
+                      provider.loadRightDirectory(file.path);
+                    }
+                  }
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 3,
                       child: _buildThumbnail(file),
                     ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
+                    Padding(
+                      padding: const EdgeInsets.all(6),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             file.name,
@@ -455,6 +452,7 @@ class FileBrowserPanel extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
+                          const SizedBox(height: 2),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
@@ -489,8 +487,8 @@ class FileBrowserPanel extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
