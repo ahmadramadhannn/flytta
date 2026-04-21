@@ -13,6 +13,7 @@ class FileBrowserProvider with ChangeNotifier {
   FileType? _leftFilterType;
   bool _leftShowHidden = false;
   String _leftSearchQuery = '';
+  bool _leftGridView = false;
 
   // Right panel state
   String _rightPath = FileSystemService.homeDirectory;
@@ -20,6 +21,7 @@ class FileBrowserProvider with ChangeNotifier {
   FileType? _rightFilterType;
   bool _rightShowHidden = false;
   String _rightSearchQuery = '';
+  bool _rightGridView = false;
 
   // Staged items (temporary bucket)
   final List<StagedItem> _stagedItems = [];
@@ -30,12 +32,14 @@ class FileBrowserProvider with ChangeNotifier {
   FileType? get leftFilterType => _leftFilterType;
   bool get leftShowHidden => _leftShowHidden;
   String get leftSearchQuery => _leftSearchQuery;
+  bool get leftGridView => _leftGridView;
 
   String get rightPath => _rightPath;
   List<FileItem> get rightFiles => _rightFiles;
   FileType? get rightFilterType => _rightFilterType;
   bool get rightShowHidden => _rightShowHidden;
   String get rightSearchQuery => _rightSearchQuery;
+  bool get rightGridView => _rightGridView;
 
   List<StagedItem> get stagedItems => List.unmodifiable(_stagedItems);
   int get stagedItemCount => _stagedItems.length;
@@ -114,6 +118,16 @@ class FileBrowserProvider with ChangeNotifier {
   void setRightSearchQuery(String query) {
     _rightSearchQuery = query;
     _applyRightSearch();
+    notifyListeners();
+  }
+
+  void toggleLeftView() {
+    _leftGridView = !_leftGridView;
+    notifyListeners();
+  }
+
+  void toggleRightView() {
+    _rightGridView = !_rightGridView;
     notifyListeners();
   }
 

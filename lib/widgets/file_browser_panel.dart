@@ -48,12 +48,26 @@ class FileBrowserPanel extends StatelessWidget {
                         : null,
                       child: files.isEmpty
                           ? const Center(child: Text('No files found'))
-                          : ListView.builder(
-                              itemCount: files.length,
-                              itemBuilder: (context, index) {
-                                return _buildFileTile(context, provider, files[index]);
-                              },
-                            ),
+                          : (isLeft ? provider.leftGridView : provider.rightGridView)
+                              ? GridView.builder(
+                                  padding: const EdgeInsets.all(8),
+                                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: 4,
+                                    childAspectRatio: 1,
+                                    crossAxisSpacing: 8,
+                                    mainAxisSpacing: 8,
+                                  ),
+                                  itemCount: files.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildFileTile(context, provider, files[index]);
+                                  },
+                                )
+                              : ListView.builder(
+                                  itemCount: files.length,
+                                  itemBuilder: (context, index) {
+                                    return _buildFileTile(context, provider, files[index]);
+                                  },
+                                ),
                     );
                   },
                 ),
@@ -101,6 +115,19 @@ class FileBrowserPanel extends StatelessWidget {
                   }
                 },
                 tooltip: 'Go up',
+              ),
+              IconButton(
+                icon: Icon(isLeft ? (provider.leftGridView ? PhosphorIcons.listDashes() : PhosphorIcons.gridFour()) : (provider.rightGridView ? PhosphorIcons.listDashes() : PhosphorIcons.gridFour())),
+                onPressed: () {
+                  if (isLeft) {
+                    provider.toggleLeftView();
+                  } else {
+                    provider.toggleRightView();
+                  }
+                },
+                tooltip: isLeft 
+                  ? (provider.leftGridView ? 'Switch to list view' : 'Switch to grid view')
+                  : (provider.rightGridView ? 'Switch to list view' : 'Switch to grid view'),
               ),
               IconButton(
                 icon: Icon(showHidden ? PhosphorIcons.eye() : PhosphorIcons.eyeSlash()),
@@ -269,6 +296,20 @@ class FileBrowserPanel extends StatelessWidget {
     FileBrowserProvider provider,
     FileItem file,
   ) {
+    final isGridView = isLeft ? provider.leftGridView : provider.rightGridView;
+
+    if (isGridView) {
+      return _buildGridItem(context, provider, file);
+    } else {
+      return _buildListItem(context, provider, file);
+    }
+  }
+
+  Widget _buildListItem(
+    BuildContext context,
+    FileBrowserProvider provider,
+    FileItem file,
+  ) {
     return Draggable<String>(
       data: file.path,
       feedback: Material(
@@ -332,6 +373,139 @@ class FileBrowserPanel extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Widget _buildGridItem(
+    BuildContext context,
+    FileBrowserProvider provider,
+    FileItem file,
+  ) {
+    return Draggable<String>(
+      data: file.path,
+      feedback: Material(
+        elevation: 4,
+        child: Container(
+          width: 120,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_getFileIcon(file.type), color: Colors.white, size: 32),
+              const SizedBox(height: 4),
+              Text(
+                file.name,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ),
+      child: DragTarget<String>(
+        onAcceptWithDetails: (details) {
+          if (file.type == FileType.directory) {
+            _handleDrop(context, provider, details.data, file.path, file.name);
+          }
+        },
+        builder: (context, candidateData, rejectedData) {
+          return Card(
+            child: InkWell(
+              onTap: () {
+                if (file.type == FileType.directory) {
+                  if (isLeft) {
+                    provider.loadLeftDirectory(file.path);
+                  } else {
+                    provider.loadRightDirectory(file.path);
+                  }
+                }
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _buildThumbnail(file),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          file.name,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          file.sizeFormatted,
+                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            IconButton(
+                              icon: Icon(PhosphorIcons.copy(), size: 16),
+                              onPressed: () => provider.stageForCopy(file.path),
+                              tooltip: 'Stage for copy',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                            IconButton(
+                              icon: Icon(PhosphorIcons.scissors(), size: 16),
+                              onPressed: () => provider.stageForMove(file.path),
+                              tooltip: 'Stage for move',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildThumbnail(FileItem file) {
+    if (file.type == FileType.image) {
+      return Image.file(
+        File(file.path),
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            color: Colors.grey[200],
+            child: Center(
+              child: Icon(PhosphorIcons.image(), size: 48, color: Colors.grey),
+            ),
+          );
+        },
+      );
+    } else if (file.type == FileType.video) {
+      return Container(
+        color: Colors.grey[200],
+        child: Center(
+          child: Icon(PhosphorIcons.filmStrip(), size: 48, color: Colors.grey),
+        ),
+      );
+    } else {
+      return Container(
+        color: Colors.grey[100],
+        child: Center(
+          child: Icon(_getFileIcon(file.type), size: 48, color: Colors.grey),
+        ),
+      );
+    }
   }
 
   void _handleDrop(
