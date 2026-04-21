@@ -104,11 +104,35 @@ class FileBrowserPanel extends StatelessWidget {
               ),
               IconButton(
                 icon: Icon(showHidden ? PhosphorIcons.eye() : PhosphorIcons.eyeSlash()),
-                onPressed: () {
-                  if (isLeft) {
-                    provider.toggleLeftHidden();
-                  } else {
-                    provider.toggleRightHidden();
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: Text(showHidden ? 'Hide Hidden Files?' : 'Show Hidden Files?'),
+                      content: Text(
+                        showHidden
+                            ? 'This will hide all hidden files and directories (starting with a dot).'
+                            : 'This will show all hidden files and directories (starting with a dot).',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Confirm'),
+                        ),
+                      ],
+                    ),
+                  );
+                  
+                  if (confirmed == true) {
+                    if (isLeft) {
+                      provider.toggleLeftHidden();
+                    } else {
+                      provider.toggleRightHidden();
+                    }
                   }
                 },
                 tooltip: showHidden ? 'Hide hidden files' : 'Show hidden files',
