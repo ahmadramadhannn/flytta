@@ -6,7 +6,6 @@ import 'providers/history_provider.dart';
 import 'widgets/file_browser_panel.dart';
 import 'widgets/staging_panel.dart';
 import 'widgets/history_panel.dart';
-import 'widgets/tab_bar_widget.dart';
 
 void main() {
   runApp(const MyApp());
@@ -81,8 +80,46 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          StagingPanel(),
         ],
+      ),
+      floatingActionButton: Consumer<FileBrowserProvider>(
+        builder: (context, provider, child) {
+          return FloatingActionButton(
+            onPressed: () => _showStagingDialog(context, provider),
+            tooltip: 'Staging Area (${provider.stagedItemCount} items)',
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Icon(PhosphorIcons.tray()),
+                if (provider.stagedItemCount > 0)
+                  Positioned(
+                    right: -6,
+                    top: -6,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      constraints: const BoxConstraints(
+                        minWidth: 20,
+                        minHeight: 20,
+                      ),
+                      child: Text(
+                        '${provider.stagedItemCount}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
@@ -108,6 +145,35 @@ class _HomePageState extends State<HomePage> {
               ),
               const Expanded(
                 child: HistoryPanel(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showStagingDialog(BuildContext context, FileBrowserProvider provider) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: SizedBox(
+          width: 600,
+          height: 400,
+          child: Column(
+            children: [
+              AppBar(
+                title: const Text('Staging Area'),
+                automaticallyImplyLeading: false,
+                actions: [
+                  IconButton(
+                    icon: Icon(PhosphorIcons.x()),
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: StagingPanel(),
               ),
             ],
           ),

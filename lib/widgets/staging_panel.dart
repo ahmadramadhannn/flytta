@@ -13,48 +13,42 @@ class StagingPanel extends StatelessWidget {
       builder: (context, provider, child) {
         final stagedItems = provider.stagedItems;
 
-        return Container(
-          height: 200,
-          decoration: const BoxDecoration(
-            border: Border(top: BorderSide(color: Colors.grey)),
-          ),
-          child: Column(
-            children: [
-              _buildHeader(context, provider, stagedItems.length),
-              Expanded(
-                child: stagedItems.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(PhosphorIcons.tray(), size: 48, color: Colors.grey),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Staging area is empty',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            Text(
-                              'Stage files by clicking copy/move buttons',
-                              style: TextStyle(fontSize: 12, color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        itemCount: stagedItems.length,
-                        itemBuilder: (context, index) {
-                          return _buildStagedItemTile(
-                            context,
-                            provider,
-                            stagedItems[index],
-                            index,
-                          );
-                        },
+        return Column(
+          children: [
+            _buildHeader(context, provider, stagedItems.length),
+            Expanded(
+              child: stagedItems.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(PhosphorIcons.tray(), size: 48, color: Colors.grey),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Staging area is empty',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          Text(
+                            'Stage files by clicking copy/move buttons',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                        ],
                       ),
-              ),
-              if (stagedItems.isNotEmpty) _buildActionButtons(context, provider),
-            ],
-          ),
+                    )
+                  : ListView.builder(
+                      itemCount: stagedItems.length,
+                      itemBuilder: (context, index) {
+                        return _buildStagedItemTile(
+                          context,
+                          provider,
+                          stagedItems[index],
+                          index,
+                        );
+                      },
+                    ),
+            ),
+            if (stagedItems.isNotEmpty) _buildActionButtons(context, provider),
+          ],
         );
       },
     );
@@ -63,10 +57,6 @@ class StagingPanel extends StatelessWidget {
   Widget _buildHeader(BuildContext context, FileBrowserProvider provider, int itemCount) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        border: const Border(bottom: BorderSide(color: Colors.grey)),
-      ),
       child: Row(
         children: [
           Icon(PhosphorIcons.tray()),
@@ -145,10 +135,6 @@ class StagingPanel extends StatelessWidget {
   Widget _buildActionButtons(BuildContext context, FileBrowserProvider provider) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        border: const Border(top: BorderSide(color: Colors.grey)),
-      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
