@@ -91,21 +91,25 @@ class FileBrowserProvider with ChangeNotifier {
 
   void setLeftFilterType(FileType? type) {
     _leftFilterType = type;
+    notifyListeners();
     loadLeftDirectory(_leftPath);
   }
 
   void setRightFilterType(FileType? type) {
     _rightFilterType = type;
+    notifyListeners();
     loadRightDirectory(_rightPath);
   }
 
   void toggleLeftHidden() {
     _leftShowHidden = !_leftShowHidden;
+    notifyListeners();
     loadLeftDirectory(_leftPath);
   }
 
   void toggleRightHidden() {
     _rightShowHidden = !_rightShowHidden;
+    notifyListeners();
     loadRightDirectory(_rightPath);
   }
 

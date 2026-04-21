@@ -420,77 +420,77 @@ class FileBrowserPanel extends StatelessWidget {
             cursor: SystemMouseCursors.click,
             child: Card(
               clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () {
-                  if (file.type == FileType.directory) {
-                    if (isLeft) {
-                      provider.loadLeftDirectory(file.path);
-                    } else {
-                      provider.loadRightDirectory(file.path);
-                    }
-                  }
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      flex: 3,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: InkWell(
+                      onTap: () {
+                        if (file.type == FileType.directory) {
+                          if (isLeft) {
+                            provider.loadLeftDirectory(file.path);
+                          } else {
+                            provider.loadRightDirectory(file.path);
+                          }
+                        }
+                      },
                       child: _buildThumbnail(file),
                     ),
-                    Expanded(
-                      flex: 1,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              file.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
+                  ),
+                  Expanded(
+                    flex: 1,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            file.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                file.sizeFormatted,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 10,
+                                ),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  file.sizeFormatted,
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 10,
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: Icon(PhosphorIcons.copy(), size: 14),
+                                    onPressed: () => provider.stageForCopy(file.path),
+                                    tooltip: 'Stage for copy',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
                                   ),
-                                ),
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: Icon(PhosphorIcons.copy(), size: 14),
-                                      onPressed: () => provider.stageForCopy(file.path),
-                                      tooltip: 'Stage for copy',
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                    IconButton(
-                                      icon: Icon(PhosphorIcons.scissors(), size: 14),
-                                      onPressed: () => provider.stageForMove(file.path),
-                                      tooltip: 'Stage for move',
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                                  IconButton(
+                                    icon: Icon(PhosphorIcons.scissors(), size: 14),
+                                    onPressed: () => provider.stageForMove(file.path),
+                                    tooltip: 'Stage for move',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           );
