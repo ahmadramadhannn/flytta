@@ -515,6 +515,20 @@ class FileBrowserPanel extends StatelessWidget {
     String destinationPath,
     String destDirectoryName,
   ) async {
+    // Check if source and destination are the same
+    final sourceDirectory = sourcePath.substring(0, sourcePath.lastIndexOf(Platform.pathSeparator));
+    if (sourceDirectory == destinationPath) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Cannot move file to the same directory'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+      return;
+    }
+
     final fileName = sourcePath.split(Platform.pathSeparator).last;
     final destPath = '$destinationPath${Platform.pathSeparator}$fileName';
     
