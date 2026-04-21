@@ -1,17 +1,17 @@
 # Flytta
 
-A modern dual-pane file manager for desktop built with Flutter.
+A dual-pane file transfer tool for desktop built with Flutter. Browse source and destination directories, then drag and drop files to copy or move them efficiently.
 
 ## Features
 
 - **Dual-panel interface** - Source and destination panels for efficient file operations
-- **Drag and drop** - Drag files between panels or drop into directories
+- **Drag and drop** - Drag files between panels or drop into directories to copy/move
+- **Staging area** - Stage multiple files for batch copy/move operations
 - **Grid and list views** - Toggle between grid and list view for file browsing
 - **File filtering** - Filter by type: images, videos, audio, documents, archives, code
 - **Search** - Quick file search within current directory
-- **Staging area** - Stage multiple files for batch copy/move operations
 - **Breadcrumb navigation** - Click path segments to navigate quickly
-- **Operation history** - Track your recent file operations
+- **Operation history** - Track your recent copy/move operations
 - **Hidden files toggle** - Show or hide hidden files and directories
 - **Image thumbnails** - Preview images in grid view with caching for smooth scrolling
 
