@@ -47,6 +47,9 @@ dependencies:
   
   # Icons
   phosphor_flutter: ^2.1.0
+  
+  # Drag and drop
+  desktop_drop: ^0.5.0
 
 dev_dependencies:
   flutter_test:

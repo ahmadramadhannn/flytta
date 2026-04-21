@@ -5,7 +5,7 @@ import '../models/staged_item.dart';
 import '../services/file_system_service.dart';
 
 class FileBrowserProvider with ChangeNotifier {
-  final FileSystemService _fileSystemService = FileSystemService();
+  final FileSystemService fileSystemService = FileSystemService();
 
   // Left panel state
   String _leftPath = FileSystemService.homeDirectory;
@@ -51,7 +51,7 @@ class FileBrowserProvider with ChangeNotifier {
 
   Future<void> loadLeftDirectory(String path) async {
     _leftPath = path;
-    _leftFiles = await _fileSystemService.getDirectoryContents(
+    _leftFiles = await fileSystemService.getDirectoryContents(
       path,
       showHidden: _leftShowHidden,
       filterType: _leftFilterType,
@@ -62,7 +62,7 @@ class FileBrowserProvider with ChangeNotifier {
 
   Future<void> loadRightDirectory(String path) async {
     _rightPath = path;
-    _rightFiles = await _fileSystemService.getDirectoryContents(
+    _rightFiles = await fileSystemService.getDirectoryContents(
       path,
       showHidden: _rightShowHidden,
       filterType: _rightFilterType,
@@ -72,14 +72,14 @@ class FileBrowserProvider with ChangeNotifier {
   }
 
   void navigateLeftUp() {
-    final parent = _fileSystemService.getParentDirectory(_leftPath);
+    final parent = fileSystemService.getParentDirectory(_leftPath);
     if (parent != _leftPath) {
       loadLeftDirectory(parent);
     }
   }
 
   void navigateRightUp() {
-    final parent = _fileSystemService.getParentDirectory(_rightPath);
+    final parent = fileSystemService.getParentDirectory(_rightPath);
     if (parent != _rightPath) {
       loadRightDirectory(parent);
     }
@@ -119,13 +119,13 @@ class FileBrowserProvider with ChangeNotifier {
 
   void _applyLeftSearch() {
     if (_leftSearchQuery.isEmpty) {
-      _leftFiles = _fileSystemService.getDirectoryContentsSync(
+      _leftFiles = fileSystemService.getDirectoryContentsSync(
         _leftPath,
         showHidden: _leftShowHidden,
         filterType: _leftFilterType,
       );
     } else {
-      final allFiles = _fileSystemService.getDirectoryContentsSync(
+      final allFiles = fileSystemService.getDirectoryContentsSync(
         _leftPath,
         showHidden: _leftShowHidden,
         filterType: _leftFilterType,
@@ -139,13 +139,13 @@ class FileBrowserProvider with ChangeNotifier {
 
   void _applyRightSearch() {
     if (_rightSearchQuery.isEmpty) {
-      _rightFiles = _fileSystemService.getDirectoryContentsSync(
+      _rightFiles = fileSystemService.getDirectoryContentsSync(
         _rightPath,
         showHidden: _rightShowHidden,
         filterType: _rightFilterType,
       );
     } else {
-      final allFiles = _fileSystemService.getDirectoryContentsSync(
+      final allFiles = fileSystemService.getDirectoryContentsSync(
         _rightPath,
         showHidden: _rightShowHidden,
         filterType: _rightFilterType,
@@ -186,9 +186,9 @@ class FileBrowserProvider with ChangeNotifier {
       final destPath = '$destinationPath${Platform.pathSeparator}$fileName';
       
       if (item.operation == StagedOperation.copy) {
-        success = await _fileSystemService.copyFile(item.path, destPath);
+        success = await fileSystemService.copyFile(item.path, destPath);
       } else {
-        success = await _fileSystemService.moveFile(item.path, destPath);
+        success = await fileSystemService.moveFile(item.path, destPath);
       }
       
       if (!success) allSuccess = false;
@@ -201,6 +201,14 @@ class FileBrowserProvider with ChangeNotifier {
     }
     
     return allSuccess;
+  }
+
+  Future<bool> copyFile(String sourcePath, String destinationPath) async {
+    return await fileSystemService.copyFile(sourcePath, destinationPath);
+  }
+
+  Future<bool> moveFile(String sourcePath, String destinationPath) async {
+    return await fileSystemService.moveFile(sourcePath, destinationPath);
   }
 }
 

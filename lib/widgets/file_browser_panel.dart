@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:provider/provider.dart';
@@ -35,14 +36,27 @@ class FileBrowserPanel extends StatelessWidget {
               _buildHeader(context, provider, currentPath, showHidden, searchQuery),
               _buildFilterBar(context, provider),
               Expanded(
-                child: files.isEmpty
-                    ? const Center(child: Text('No files found'))
-                    : ListView.builder(
-                        itemCount: files.length,
-                        itemBuilder: (context, index) {
-                          return _buildFileTile(context, provider, files[index]);
-                        },
-                      ),
+                child: DragTarget<String>(
+                  onAcceptWithDetails: (details) {
+                    // Handle drop in the current directory
+                    _handleDrop(context, provider, details.data, currentPath, currentPath);
+                  },
+                  builder: (context, candidateData, rejectedData) {
+                    return Container(
+                      color: candidateData.isNotEmpty 
+                        ? Colors.blue.withOpacity(0.1) 
+                        : null,
+                      child: files.isEmpty
+                          ? const Center(child: Text('No files found'))
+                          : ListView.builder(
+                              itemCount: files.length,
+                              itemBuilder: (context, index) {
+                                return _buildFileTile(context, provider, files[index]);
+                              },
+                            ),
+                    );
+                  },
+                ),
               ),
             ],
           ),
@@ -231,35 +245,101 @@ class FileBrowserPanel extends StatelessWidget {
     FileBrowserProvider provider,
     FileItem file,
   ) {
-    return ListTile(
-      leading: Icon(_getFileIcon(file.type)),
-      title: Text(file.name),
-      subtitle: Text('${file.sizeFormatted} • ${_formatDate(file.modified)}'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: Icon(PhosphorIcons.copy()),
-            onPressed: () => provider.stageForCopy(file.path),
-            tooltip: 'Stage for copy',
+    return Draggable<String>(
+      data: file.path,
+      feedback: Material(
+        elevation: 4,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(8),
           ),
-          IconButton(
-            icon: Icon(PhosphorIcons.scissors()),
-            onPressed: () => provider.stageForMove(file.path),
-            tooltip: 'Stage for move',
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_getFileIcon(file.type), color: Colors.white),
+              const SizedBox(width: 8),
+              Text(
+                file.name,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
-      onTap: () {
-        if (file.type == FileType.directory) {
-          if (isLeft) {
-            provider.loadLeftDirectory(file.path);
-          } else {
-            provider.loadRightDirectory(file.path);
+      child: DragTarget<String>(
+        onAcceptWithDetails: (details) {
+          // Handle drop on file/directory
+          if (file.type == FileType.directory) {
+            _handleDrop(context, provider, details.data, file.path, file.name);
           }
-        }
-      },
+        },
+        builder: (context, candidateData, rejectedData) {
+          return ListTile(
+            leading: Icon(_getFileIcon(file.type)),
+            title: Text(file.name),
+            subtitle: Text('${file.sizeFormatted} • ${_formatDate(file.modified)}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: Icon(PhosphorIcons.copy()),
+                  onPressed: () => provider.stageForCopy(file.path),
+                  tooltip: 'Stage for copy',
+                ),
+                IconButton(
+                  icon: Icon(PhosphorIcons.scissors()),
+                  onPressed: () => provider.stageForMove(file.path),
+                  tooltip: 'Stage for move',
+                ),
+              ],
+            ),
+            onTap: () {
+              if (file.type == FileType.directory) {
+                if (isLeft) {
+                  provider.loadLeftDirectory(file.path);
+                } else {
+                  provider.loadRightDirectory(file.path);
+                }
+              }
+            },
+          );
+        },
+      ),
     );
+  }
+
+  void _handleDrop(
+    BuildContext context,
+    FileBrowserProvider provider,
+    String sourcePath,
+    String destinationPath,
+    String destDirectoryName,
+  ) async {
+    final fileName = sourcePath.split(Platform.pathSeparator).last;
+    final destPath = '$destinationPath${Platform.pathSeparator}$fileName';
+    
+    final success = await provider.copyFile(sourcePath, destPath);
+    
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(success 
+            ? 'Copied $fileName to $destDirectoryName' 
+            : 'Failed to copy $fileName'),
+          backgroundColor: success ? Colors.green : Colors.red,
+        ),
+      );
+      
+      if (success) {
+        if (isLeft) {
+          provider.loadLeftDirectory(destinationPath);
+        } else {
+          provider.loadRightDirectory(destinationPath);
+        }
+      }
+    }
   }
 
   IconData _getFileIcon(FileType type) {

@@ -101,16 +101,43 @@ class StagingPanel extends StatelessWidget {
     final fileName = item.path.split('/').last;
     final isCopy = item.operation == StagedOperation.copy;
 
-    return ListTile(
-      leading: Icon(
-        isCopy ? PhosphorIcons.copy() : PhosphorIcons.scissors(),
-        color: isCopy ? Colors.blue : Colors.orange,
+    return Draggable<String>(
+      data: item.path,
+      feedback: Material(
+        elevation: 4,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isCopy ? Colors.blue.withOpacity(0.9) : Colors.orange.withOpacity(0.9),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isCopy ? PhosphorIcons.copy() : PhosphorIcons.scissors(),
+                color: Colors.white,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                fileName,
+                style: const TextStyle(color: Colors.white),
+              ),
+            ],
+          ),
+        ),
       ),
-      title: Text(fileName),
-      subtitle: Text(item.path),
-      trailing: IconButton(
-        icon: Icon(PhosphorIcons.x()),
-        onPressed: () => provider.removeStagedItem(index),
+      child: ListTile(
+        leading: Icon(
+          isCopy ? PhosphorIcons.copy() : PhosphorIcons.scissors(),
+          color: isCopy ? Colors.blue : Colors.orange,
+        ),
+        title: Text(fileName),
+        subtitle: Text(item.path),
+        trailing: IconButton(
+          icon: Icon(PhosphorIcons.x()),
+          onPressed: () => provider.removeStagedItem(index),
+        ),
       ),
     );
   }
