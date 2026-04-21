@@ -341,34 +341,37 @@ class FileBrowserPanel extends StatelessWidget {
           }
         },
         builder: (context, candidateData, rejectedData) {
-          return ListTile(
-            leading: Icon(_getFileIcon(file.type)),
-            title: Text(file.name),
-            subtitle: Text('${file.sizeFormatted} • ${_formatDate(file.modified)}'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: Icon(PhosphorIcons.copy()),
-                  onPressed: () => provider.stageForCopy(file.path),
-                  tooltip: 'Stage for copy',
-                ),
-                IconButton(
-                  icon: Icon(PhosphorIcons.scissors()),
-                  onPressed: () => provider.stageForMove(file.path),
-                  tooltip: 'Stage for move',
-                ),
-              ],
-            ),
-            onTap: () {
-              if (file.type == FileType.directory) {
-                if (isLeft) {
-                  provider.loadLeftDirectory(file.path);
-                } else {
-                  provider.loadRightDirectory(file.path);
+          return MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: ListTile(
+              leading: Icon(_getFileIcon(file.type)),
+              title: Text(file.name),
+              subtitle: Text('${file.sizeFormatted} • ${_formatDate(file.modified)}'),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: Icon(PhosphorIcons.copy()),
+                    onPressed: () => provider.stageForCopy(file.path),
+                    tooltip: 'Stage for copy',
+                  ),
+                  IconButton(
+                    icon: Icon(PhosphorIcons.scissors()),
+                    onPressed: () => provider.stageForMove(file.path),
+                    tooltip: 'Stage for move',
+                  ),
+                ],
+              ),
+              onTap: () {
+                if (file.type == FileType.directory) {
+                  if (isLeft) {
+                    provider.loadLeftDirectory(file.path);
+                  } else {
+                    provider.loadRightDirectory(file.path);
+                  }
                 }
-              }
-            },
+              },
+            ),
           );
         },
       ),
@@ -413,62 +416,81 @@ class FileBrowserPanel extends StatelessWidget {
           }
         },
         builder: (context, candidateData, rejectedData) {
-          return Card(
-            child: InkWell(
-              onTap: () {
-                if (file.type == FileType.directory) {
-                  if (isLeft) {
-                    provider.loadLeftDirectory(file.path);
-                  } else {
-                    provider.loadRightDirectory(file.path);
+          return MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: Card(
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: () {
+                  if (file.type == FileType.directory) {
+                    if (isLeft) {
+                      provider.loadLeftDirectory(file.path);
+                    } else {
+                      provider.loadRightDirectory(file.path);
+                    }
                   }
-                }
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: _buildThumbnail(file),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          file.name,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          file.sizeFormatted,
-                          style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
+                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: _buildThumbnail(file),
+                    ),
+                    Expanded(
+                      flex: 1,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            IconButton(
-                              icon: Icon(PhosphorIcons.copy(), size: 16),
-                              onPressed: () => provider.stageForCopy(file.path),
-                              tooltip: 'Stage for copy',
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                            Text(
+                              file.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            IconButton(
-                              icon: Icon(PhosphorIcons.scissors(), size: 16),
-                              onPressed: () => provider.stageForMove(file.path),
-                              tooltip: 'Stage for move',
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  file.sizeFormatted,
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 10,
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(PhosphorIcons.copy(), size: 14),
+                                      onPressed: () => provider.stageForCopy(file.path),
+                                      tooltip: 'Stage for copy',
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(PhosphorIcons.scissors(), size: 14),
+                                      onPressed: () => provider.stageForMove(file.path),
+                                      tooltip: 'Stage for move',
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                    ),
+                                  ],
+                                ),
+                              ],
                             ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           );
